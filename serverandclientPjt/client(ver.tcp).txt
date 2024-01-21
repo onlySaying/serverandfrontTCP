@@ -1,0 +1,172 @@
+package dd;
+
+import java.awt.BorderLayout;
+import java.awt.EventQueue;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
+
+import java.io.*;
+import java.net.*;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JTextField;
+import javax.swing.JButton;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+import javax.swing.JPasswordField;
+import java.awt.event.MouseMotionAdapter;
+import java.awt.event.MouseEvent;
+import javax.swing.JTextArea;
+import java.awt.Font;
+
+public class tcp_client extends JFrame {
+
+	private JPanel contentPane;
+	private static Socket theSocket = null;
+	private static String host,state_msg;
+	private static int state = 0; 
+	private static  InputStream is;
+	private static  BufferedReader reader;
+	private static   OutputStream os;
+	private static   BufferedWriter writer;
+	private static   String theLine;
+	private JTextField id_txt;
+	private JPasswordField pw_field;
+	private static JLabel state_label = new JLabel("");
+	
+	/**
+	 * Launch the application.
+	 */
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				tcp_client frame = new tcp_client();
+				frame.setVisible(true);	
+			}
+		});
+		try {
+			 theSocket = new Socket(host, 5000); // echo 서버에 접속한다.
+	         is = theSocket.getInputStream();
+	         reader = new BufferedReader(new InputStreamReader(is));
+	         os = theSocket.getOutputStream();
+	         writer = new BufferedWriter(new OutputStreamWriter(os));
+	         writer.write("require access" + '\r' + '\n');
+	         writer.flush();
+	        String in;
+	         while(true) {
+	        	 in = reader.readLine();
+	        	 if(in.equals("access denied")) {
+	        		 System.exit(EXIT_ON_CLOSE);
+	        	 }
+	        	 else if(in.equals("Hello!")) {
+	        		 JOptionPane.showMessageDialog(null, in);
+	        		 state_msg = in;
+	        		 state = 0;
+	        	 }
+	        	 else if(in.equals("아이디를 입력해주세요")) {
+	        		 state_msg = in;
+	        		 state = 0;
+	        	 }
+	        	 else if(in.equals("잘못된 입력입니다")) {
+	        		 state_label.setText(in);
+	        		 state_msg = in;
+	        		 state = 0;
+	        	 }
+	        	 else if(in.equals("비밀번호를 입력해주세요")) {
+	        		 state_label.setText(in);
+	        		 state_msg = in;
+	        		 state = 1;
+	        	 }
+	        	 else if(in.equals("잘못된 비밀번호입니다")) {
+	        		 state_label.setText(in);
+	        		 state_msg = in;
+	        		 state = 1;
+	        	 }
+	        	 else if(in.equals("접속완료")) {
+	        		 state_label.setText(in);
+	        		 state_msg = in;
+	        		 state = 2;
+	        	 }
+	         }
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Create the frame.
+	 */
+	public tcp_client() {
+		
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(100, 100, 450, 300);
+		contentPane = new JPanel();
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(contentPane);
+		contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
+		JLabel lblId = new JLabel("id");
+		lblId.setFont(new Font("Arial", Font.BOLD, 15));
+		JLabel lblPw = new JLabel("pw");
+		lblPw.setFont(new Font("Arial", Font.BOLD, 15));
+		pw_field = new JPasswordField();
+		
+		JPanel panel = new JPanel();
+		contentPane.add(panel);
+		
+		panel.add(state_label);
+		
+		JPanel panel_1 = new JPanel();
+		contentPane.add(panel_1);
+		panel_1.setLayout(null);
+		
+		id_txt = new JTextField();
+		id_txt.setBounds(122, 65, 116, 21);
+		panel_1.add(id_txt);
+		id_txt.setColumns(10);
+		
+		JButton ent_btn = new JButton("login");
+		ent_btn.setBounds(243, 65, 103, 21);
+		ent_btn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					if(state == 0) {
+						writer.write(id_txt.getText() + '\r' + '\n');
+						writer.flush();
+					}
+					else if(state == 1) {
+						writer.write(String.valueOf(pw_field.getPassword()) + '\r' + '\n');
+						writer.flush();
+					}
+					id_txt.setText("");
+					pw_field.setText("");
+				}
+				catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
+		});
+		panel_1.add(ent_btn);
+		
+		pw_field.setBounds(122, 90, 116, 21);
+		panel_1.add(pw_field);
+		
+		lblId.setBounds(86, 68, 24, 15);
+		panel_1.add(lblId);
+		
+		lblPw.setBounds(86, 90, 24, 21);
+		panel_1.add(lblPw);
+		
+		JButton cancel_btn = new JButton("cancel");
+		cancel_btn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				System.exit(EXIT_ON_CLOSE);
+			}
+		});
+		cancel_btn.setBounds(243, 89, 103, 21);
+		panel_1.add(cancel_btn);
+	}
+}

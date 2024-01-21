@@ -1,0 +1,110 @@
+package dd;
+
+import java.net.*;
+import java.io.*;
+
+import java.io.*;
+import java.net.*;
+
+public class tcp_server{
+	private static String[] user_id = new String[100];
+	private static String[] user_pw = new String[100];
+	private static int top =0;
+	private static int state; 
+	private static int count;
+	public static void main(String args[]){
+		user_id[0] = "idisnull";
+		user_pw[0] = "passwordtoomuchlong";
+		ServerSocket s_sck;
+		Socket sck = null;
+		InputStream is;
+		BufferedReader reader;
+		OutputStream os;
+		BufferedWriter writer;
+		String input;
+		initstate();
+		try{
+			int temp = 0; boolean correct;
+			s_sck = new ServerSocket(5000);
+			sck = s_sck.accept();
+			is = sck.getInputStream();
+			reader = new BufferedReader(new InputStreamReader(is));
+			os = sck.getOutputStream();
+			writer = new BufferedWriter(new OutputStreamWriter(os));
+			while((input = reader.readLine()) != null ){
+				switch(state) {
+				case 0:
+					writer.write("Hello!" + '\r' + '\n');
+					writer.flush();
+					writer.write("아이디를 입력해주세요" + '\r' + '\n');
+					writer.flush();
+					state = 1; count = 0;
+					break;
+				case 1:
+					temp = config_id(input);
+					if(temp == (-1)) {
+						writer.write("잘못된 입력입니다" + '\r' + '\n');
+						writer.flush();
+						count ++;
+						if(count == 3) {
+							state = 0;
+							writer.write("access denied" + '\r' + '\n');
+							writer.flush();
+							initstate();
+						}
+					}
+					else {
+						writer.write("비밀번호를 입력해주세요"+'\r' + '\n');
+						writer.flush();
+						state = 2;
+						count = 0;
+					}
+					break;
+				case 2:
+					correct = config_pw(input, temp);
+					if(correct == false) {
+						writer.write("잘못된 비밀번호입니다" +'\r' + '\n');
+						writer.flush();
+						count ++;
+						if(count == 3) {
+							writer.write("access denied" + '\r' + '\n');
+							initstate();
+						}
+					}
+					else {
+						writer.write("접속완료" +'\r' + '\n');
+						initstate();
+					}
+				}
+				writer.flush();
+				}
+	      }catch(UnknownHostException e){
+	         System.err.println(e);
+	      }catch(IOException e){
+	         System.err.println(e);
+	      }finally{
+	         if(sck != null){
+	            try{
+	            	sck.close();
+	            }catch(IOException e){
+	               System.out.println(e);
+	            }
+	         }
+	      }
+	   }
+	   private static void initstate() {state = 0; count = 0;}
+	   private static int config_id(String id) {
+		   for(int i =0; i <= top; i++) {
+			   if(user_id[i].equals(id)) {
+				   return i;
+			   }
+		   }
+		   return -1;
+	   }
+	   private static boolean config_pw(String pw, int index) {
+		   if(user_pw[index].equals(pw)) {
+			   return true;
+		   }
+		   return false;
+	   }
+}  
